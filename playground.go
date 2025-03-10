@@ -90,7 +90,7 @@ func setupTempFiles() (*Playground, error) {
 		)
 	}
 
-	tempfileName := path.Join(out.DirName, "playground.ts")
+	tempfileName := path.Join(out.DirName, "playground.js")
 	out.File, err = os.Create(tempfileName)
 	if err != nil {
 		out.Destroy()

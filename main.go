@@ -48,20 +48,24 @@ func Run() int {
 	return 0
 }
 
-type Command rune
+type Command string
 
 const (
-	CommandRun    Command = 'r'
-	CommandEditor Command = 'e'
+	CommandRun    Command = "r"
+	CommandEditor Command = "e"
+	CommandClear  Command = "clear"
 )
 
 func CommandLoop(playground *Playground) error {
+	ClearStdout()
+
 	for {
 		fmt.Printf(
-			"Enter command (%s to run, %s for editor, ctrl-c to exit)\n"+
+			"Enter command (%s to run, %s for editor, %s to clear output, ctrl-c to exit)\n"+
 				"> ",
 			string(CommandRun),
 			string(CommandEditor),
+			string(CommandClear),
 		)
 
 		var cmd string
@@ -74,11 +78,10 @@ func CommandLoop(playground *Playground) error {
 			)
 		}
 
-		switch Command(cmd[0]) {
+		switch Command(cmd) {
 		case CommandRun:
 			{
-				out := RunScript(playground)
-				fmt.Printf("\n%s", out)
+				RunScript(playground)
 				break
 			}
 		case CommandEditor:
@@ -88,11 +91,19 @@ func CommandLoop(playground *Playground) error {
 				}
 				break
 			}
+		case CommandClear:
+			{
+				ClearStdout()
+				break
+			}
 		default:
 			{
 				fmt.Printf("Unknown command %s\n", cmd)
+				break
 			}
 		}
+
+		fmt.Print("\n")
 	}
 }
 
@@ -105,9 +116,7 @@ func OpenNeovim(playground *Playground) error {
 	cmd.Stderr = os.Stderr
 	cmd.Dir = playground.DirName
 
-	err := cmd.Run()
-
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return handleExecError(
 			err,
 			fmt.Sprintf("Failed to open neovim in %s", playground.File.Name()),
@@ -117,6 +126,17 @@ func OpenNeovim(playground *Playground) error {
 	return nil
 }
 
-func RunScript(playground *Playground) string {
-	return "TODO: implement running script\n\n"
+func RunScript(playground *Playground) {
+	pathToFile := playground.File.Name()
+
+	cmd := exec.Command("node", pathToFile)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	_ = cmd.Run()
+}
+
+func ClearStdout() {
+	fmt.Print("\033[2J")
 }
