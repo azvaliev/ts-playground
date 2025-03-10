@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 )
 
 func main() {
@@ -57,8 +58,6 @@ const (
 )
 
 func CommandLoop(playground *Playground) error {
-	ClearStdout()
-
 	for {
 		fmt.Printf(
 			"Enter command (%s to run, %s for editor, %s to clear output, ctrl-c to exit)\n"+
@@ -126,15 +125,50 @@ func OpenNeovim(playground *Playground) error {
 	return nil
 }
 
-func RunScript(playground *Playground) {
-	pathToFile := playground.File.Name()
+func RunScript(playground *Playground) error {
+	pathToInputFile := playground.File.Name()
+	pathToOutFile := path.Join(playground.DirName, "playground.js")
 
-	cmd := exec.Command("node", pathToFile)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	// Compile the TypeScript file
+	{
+		tsc := "tsc"
+		cmd := exec.Command(
+			"npx",
+			tsc,
+			pathToInputFile,
+			"--outFile",
+			pathToOutFile,
+		)
+		cmd.Dir = playground.DirName
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 
-	_ = cmd.Run()
+		err := cmd.Run()
+		if exitError, isExitError := err.(*exec.ExitError); isExitError {
+			return fmt.Errorf("%s exited with status code %d", tsc, exitError.ExitCode())
+		} else if err != nil {
+			return err
+		}
+	}
+
+	// Execute the compiled JavaScript file
+	{
+		node := "node"
+		cmd := exec.Command(node, pathToInputFile)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = playground.DirName
+
+		err := cmd.Run()
+		if exitError, isExitError := err.(*exec.ExitError); isExitError {
+			return fmt.Errorf("%s exited with status code %d", node, exitError.ExitCode())
+		} else if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func ClearStdout() {
