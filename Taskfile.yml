@@ -1,0 +1,11 @@
+version: "3"
+tasks:
+  build:
+    env:
+      GOOS: darwin
+      GOARCH: arm64
+    cmds:
+      - go build -o ts-playground .
+  run:
+    cmds:
+      - go run .
