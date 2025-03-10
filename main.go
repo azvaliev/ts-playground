@@ -36,25 +36,109 @@ func Run() int {
 		return 1
 	}
 
+	fmt.Printf("Setup playground at %s\n", tempfile.DirName)
+
+	// Run TS Playground
+	{
+		err := OpenNeovim(tempfile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+			return 1
+		}
+
+		err = CommandLoop(tempfile)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+			return 1
+		}
+	}
+
 	return 0
 }
 
-func SetupPlaygroundConfig(dirname string) error {
-	cmd := exec.Command("npx", "-y", "tsc", "--init")
-	cmd.Dir = dirname
-	out, err := cmd.Output()
+type Command rune
 
-	if err != nil {
-		fmt.Fprint(os.Stderr, string(out))
+const (
+	CommandRun    Command = 'r'
+	CommandEditor Command = 'e'
+)
 
-		if exitErr, isExitErr := err.(*exec.ExitError); isExitErr {
-			fmt.Fprint(os.Stderr, string(exitErr.Stderr))
+func CommandLoop(playgroundFiles *PlaygroundFiles) error {
+	for {
+		fmt.Printf(
+			"Enter command (%s to run, %s for editor, ctrl-c to exit)\n"+
+				"> ",
+			string(CommandRun),
+			string(CommandEditor),
+		)
+
+		var cmd string
+		_, err := fmt.Scan(&cmd)
+
+		if err != nil || cmd == "" {
+			return errors.Join(
+				errors.New("could not read input"),
+				err,
+			)
 		}
 
-		return errors.Join(
-			errors.New("failed to setup playground"),
+		switch Command(cmd[0]) {
+		case CommandRun:
+			{
+				out := RunScript(playgroundFiles)
+				fmt.Printf("\n%s", out)
+				break
+			}
+		case CommandEditor:
+			{
+				if err := OpenNeovim(playgroundFiles); err != nil {
+					return err
+				}
+				break
+			}
+		default:
+			{
+				fmt.Printf("Unknown command %s\n", cmd)
+			}
+		}
+	}
+}
+
+func OpenNeovim(playgroundFiles *PlaygroundFiles) error {
+	relativeFilename := playgroundFiles.RelativeFilename()
+
+	cmd := exec.Command("nvim", relativeFilename)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = playgroundFiles.DirName
+
+	err := cmd.Run()
+
+	if err != nil {
+		return handleExecError(
 			err,
+			fmt.Sprintf("Failed to open neovim in %s", playgroundFiles.File.Name()),
 		)
+	}
+
+	return nil
+}
+
+func RunScript(playgroundFiles *PlaygroundFiles) string {
+	return "TODO: implement running script\n\n"
+}
+
+func SetupPlaygroundConfig(dirname string) error {
+	// create tsconfig
+	{
+		cmd := exec.Command("npx", "-y", "tsc", "--init")
+		cmd.Dir = dirname
+
+		if out, err := cmd.Output(); err != nil {
+			fmt.Println(out)
+			return handleExecError(err, "Failed to setup playground project")
+		}
 	}
 
 	return nil
@@ -63,6 +147,15 @@ func SetupPlaygroundConfig(dirname string) error {
 type PlaygroundFiles struct {
 	File    *os.File
 	DirName string
+}
+
+func (pf *PlaygroundFiles) RelativeFilename() string {
+	if pf.File == nil {
+		return ""
+	}
+
+	_, filename := path.Split(pf.File.Name())
+	return filename
 }
 
 func CleanupFiles(playgroundFiles *PlaygroundFiles) error {
@@ -80,24 +173,23 @@ func CleanupFiles(playgroundFiles *PlaygroundFiles) error {
 
 func getTempFile() (*PlaygroundFiles, error) {
 	osTempDir := os.TempDir()
-
 	if osTempDir == "" {
 		return nil, errors.New("failed to retrieve temporary directory")
 	}
 
-	tempdir, err := os.MkdirTemp(osTempDir, "ts-playground-*")
+	out := PlaygroundFiles{}
+
+	var err error
+	out.DirName, err = os.MkdirTemp(osTempDir, "ts-playground-*")
 	if err != nil {
 		return nil, errors.Join(
 			errors.New("failed to create temporary directory"),
 			err,
 		)
 	}
-	out := PlaygroundFiles{
-		DirName: tempdir,
-	}
 
-	tempfileName := path.Join(tempdir, "playground.ts")
-	tempfile, err := os.Create(tempfileName)
+	tempfileName := path.Join(out.DirName, "playground.ts")
+	out.File, err = os.Create(tempfileName)
 	if err != nil {
 		CleanupFiles(&out)
 		return nil, errors.Join(
@@ -106,8 +198,26 @@ func getTempFile() (*PlaygroundFiles, error) {
 		)
 	}
 
-	return &PlaygroundFiles{
-		File:    tempfile,
-		DirName: tempdir,
-	}, nil
+	err = os.Chmod(out.File.Name(), os.ModePerm)
+	if err != nil {
+		CleanupFiles(&out)
+		return nil, errors.Join(
+			errors.New("failed to get allocated permission on playground file"),
+			err,
+		)
+	}
+
+	return &out, nil
+}
+
+// log stderr and wrap the error messaging
+func handleExecError(err error, message string) error {
+	if exitErr, isExitErr := err.(*exec.ExitError); isExitErr {
+		fmt.Fprint(os.Stderr, string(exitErr.Stderr))
+	}
+
+	return errors.Join(
+		errors.New(message),
+		err,
+	)
 }
