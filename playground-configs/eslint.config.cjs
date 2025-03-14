@@ -14,23 +14,21 @@ module.exports = tseslint.config([
   },
   {
     "files": ["**/*.ts"],
-    parser: '@typescript-eslint/parser',
-    parserOptions: {
-      sourceType: 'module'
+    languageOptions: {
+      parser: '@typescript-eslint/parser',
+      parserOptions: {
+        sourceType: 'module'
+      },
+      globals: {
+        ...globals.node,
+        ...globals.es2020,
+      }
     },
     plugins: ['@typescript-eslint'],
     rules: {
       '@typescript-eslint/no-duplicate-enum-values': 'error',
       '@typescript-eslint/no-empty-object-type': 'error',
         '@typescript-eslint/no-misused-new': 'error',
-    }
-  },
-  {
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.es2020,
-      }
     }
   },
 ]);
