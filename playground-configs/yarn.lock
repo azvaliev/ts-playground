@@ -5,10 +5,11 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@azvaliev/ts-playground-eslint-config@workspace:.":
+"@azvaliev/ts-playground-configs@workspace:.":
   version: 0.0.0-use.local
-  resolution: "@azvaliev/ts-playground-eslint-config@workspace:."
+  resolution: "@azvaliev/ts-playground-configs@workspace:."
   dependencies:
+    "@types/node": "npm:20"
     eslint: "npm:^9.22.0"
     globals: "npm:^16.0.0"
     typescript: "npm:^5.8.2"
@@ -178,6 +179,15 @@ __metadata:
   version: 7.0.15
   resolution: "@types/json-schema@npm:7.0.15"
   checksum: 10c0/a996a745e6c5d60292f36731dd41341339d4eeed8180bb09226e5c8d23759067692b1d88e5d91d72ee83dfc00d3aca8e7bd43ea120516c17922cbcb7c3e252db
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:20":
+  version: 20.17.24
+  resolution: "@types/node@npm:20.17.24"
+  dependencies:
+    undici-types: "npm:~6.19.2"
+  checksum: 10c0/2a39ce4c4cd4588a05b2a485cc0a1407cbea608dd1ab03e36add59d61712718d95c84b492ca5190753f0be2bce748aeeb0f2a1412e712775462befe3820b3ff9
   languageName: node
   linkType: hard
 
@@ -1077,6 +1087,13 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10c0/5448a08e595cc558ab321e49d4cac64fb43d1fa106584f6ff9a8d8e592111b373a995a1d5c7f3046211c8a37201eb6d0f1566f15cdb7a62a5e3be01d087848e2
+  languageName: node
+  linkType: hard
+
+"undici-types@npm:~6.19.2":
+  version: 6.19.8
+  resolution: "undici-types@npm:6.19.8"
+  checksum: 10c0/078afa5990fba110f6824823ace86073b4638f1d5112ee26e790155f481f2a868cc3e0615505b6f4282bdf74a3d8caad715fd809e870c2bb0704e3ea6082f344
   languageName: node
   linkType: hard
 
