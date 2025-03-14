@@ -24,7 +24,9 @@ module.exports = tseslint.config([
         ...globals.es2020,
       }
     },
-    plugins: ['@typescript-eslint'],
+    plugins: {
+      '@typescript-eslint': tseslint.plugin,
+    },
     rules: {
       '@typescript-eslint/no-duplicate-enum-values': 'error',
       '@typescript-eslint/no-empty-object-type': 'error',

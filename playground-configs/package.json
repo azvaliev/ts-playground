@@ -1,6 +1,6 @@
 {
   "name": "@azvaliev/ts-playground-configs",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "packageManager": "yarn@4.6.0",
   "main": "eslint.config.cjs",
   "scripts": {
