@@ -15,9 +15,10 @@ module.exports = tseslint.config([
   {
     "files": ["**/*.ts"],
     languageOptions: {
-      parser: '@typescript-eslint/parser',
+      parser: tseslint.parser,
       parserOptions: {
-        sourceType: 'module'
+        sourceType: 'module',
+        project: './tsconfig.json',
       },
       globals: {
         ...globals.node,
